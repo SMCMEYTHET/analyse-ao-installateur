@@ -1,0 +1,20 @@
+--- a/server/ia.js
++++ b/server/ia.js
+@@ -260,7 +260,8 @@
+         body: JSON.stringify({
+           model: modele,
+           max_tokens: 16000,
+-          temperature: 0,
++          // Pas de « temperature » : les modèles Claude récents (Sonnet 5.5, Opus 4.7 et suivants…)
++          // refusent toute valeur autre que celle par défaut (erreur 400).
+           messages: [
+             {
+               role: "user",
+@@ -358,7 +359,6 @@
+           body: JSON.stringify({
+             model: modele,
+             max_tokens: 8000,
+-            temperature: 0,
+             messages: [{ role: "user", content: `${consigne}\n\nRéponds UNIQUEMENT par {"types": ["...", ...]}.` }],
+           }),
+         },
