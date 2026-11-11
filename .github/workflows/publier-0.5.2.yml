@@ -1,0 +1,48 @@
+# Construit l'installateur Analyse AO 0.5.2 (0.5.1 + correctif lecture IA Claude) et le publie en Release.
+# Les PC Analyse AO voient alors la mise à jour dans Réglages. Ne fait rien si la Release v0.5.2 existe déjà.
+name: Publier Analyse AO 0.5.2
+
+on:
+  push:
+    branches: [claude/pdf-ai-reading-issue-efx181]
+    paths: ["correctifs/**", "outils/**", ".github/workflows/publier-0.5.2.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publier:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Release v0.5.2 déjà publiée ?
+        id: deja
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v0.5.2 --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "La Release v0.5.2 existe déjà : rien à faire."
+            echo "oui=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Construire l'installateur 0.5.2
+        if: steps.deja.outputs.oui != '1'
+        run: outils/construire-0.5.2.sh construction
+
+      - name: Publier la Release v0.5.2
+        if: steps.deja.outputs.oui != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.5.2 construction/proj/dist/Analyse-AO-Installateur-0.5.2.exe \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest \
+            --title "Analyse AO 0.5.2" \
+            --notes "Installateur Analyse AO 0.5.2 — correctif : la lecture IA des PDF et images (et le classement IA) échouait avec Claude (erreur 400 « temperature »)."
